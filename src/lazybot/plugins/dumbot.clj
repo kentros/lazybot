@@ -2,9 +2,12 @@
   (:use lazybot.registry)
   (:require [cheshire.core :as json]
             [clj-http.client :as http]
-            [clojure.string :as string]))
+            [clojure.string :as string])
+  (:import (java.util Date)))
 
 (use '[clojure.java.shell :only [sh]])
+
+(defn today [] (.format (java.text.SimpleDateFormat. "MM/dd") (Date.)))
 
 (defplugin
   (:cmd 
@@ -41,6 +44,13 @@
    (fn [{:keys [args] :as com-m}]
      (send-message com-m
                    (get-in (json/parse-string (:body (http/get "http://api.icndb.com/jokes/random"))) ["value" "joke"]))))
+  
+  (:cmd
+   "Display random fact about today."
+   #{"today"}
+   (fn [{:keys [args] :as com-m}]
+     (send-message com-m
+                   (slurp (str "http://numbersapi.com/" (today))))))
   (:cmd
    "Test."
    #{"test"}

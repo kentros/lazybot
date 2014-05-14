@@ -9,6 +9,8 @@
 
 (defn today [] (.format (java.text.SimpleDateFormat. "MM/dd") (Date.)))
 
+(defn query-finance [x] (str (str (second (re-find #"<title>(.*?)<\/title>" (slurp x)))) ": " x))
+
 (defplugin
   (:cmd 
    "Attempts to make an intelligent reply from arbitrary input." 
@@ -51,6 +53,14 @@
    (fn [{:keys [args] :as com-m}]
      (send-message com-m
                    (slurp (str "http://numbersapi.com/" (today))))))
+
+  (:cmd
+   "Link to Google Finance stock information for the given company."
+   #{"stock"}
+   (fn [{:keys [args] :as com-m}]
+     (send-message com-m
+                   (query-finance (str "https://www.google.com/finance?q=" (string/join "%20" args))))))
+
   (:cmd
    "Test."
    #{"test"}

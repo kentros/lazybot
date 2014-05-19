@@ -7,9 +7,19 @@
 
 (use '[clojure.java.shell :only [sh]])
 
+(defn app-id [bot] (-> bot :config :dumbot :parse-app-id))
+(defn api-key [bot] (-> bot :config :dumbot :parse-api-key))
+
 (defn today [] (.format (java.text.SimpleDateFormat. "MM/dd") (Date.)))
 
 (defn query-finance [x] (str (str (second (re-find #"<title>(.*?)<\/title>" (slurp x)))) ": " x))
+
+(defn suburb-define [bot w] (get-in (json/parse-string (:body (http/post "https://api.parse.com/1/functions/define"
+  {:body (str "{\"word\": \"" w "\"}")
+   :headers {"X-Parse-Application-Id" (app-id @bot)
+             "X-Parse-REST-API-Key" (api-key @bot)}
+   :content-type :json
+   :accept :json}))) ["result"]))
 
 (defplugin
   (:cmd 
@@ -18,6 +28,13 @@
    (fn [{:keys [args] :as com-m}]
      (send-message com-m 
                    (:out (sh "python" "chat.py" (string/join " " args))))))
+
+  (:cmd
+   "Displays a G-rated version of an urbandictionary term, which should be even creepier than the original."
+   #{"suburban" "suburb" "burb" "burbs"}
+   (fn [{:keys [bot args] :as com-m}]
+     (send-message com-m
+                   (suburb-define bot (string/join "%20" args)))))
 
   (:cmd
    "Say a random yomomma joke."

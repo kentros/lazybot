@@ -5,7 +5,6 @@
 (def blanks (re-pattern "_{2,}"))
 
 (defn fill-in-blanks [s words]
-  ;(println (:noun (words 0))))
   (loop [end s x (dec (count (re-seq blanks s)))]
     (if (< x 0)
       end

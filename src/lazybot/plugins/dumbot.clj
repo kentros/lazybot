@@ -3,7 +3,8 @@
   (:require [cheshire.core :as json]
             [clj-http.client :as http]
             [clojure.string :as string])
-  (:import (java.util Date)))
+  (:import (java.util Date)
+           (java.net URLEncoder)))
 
 (use '[clojure.java.shell :only [sh]])
 
@@ -21,13 +22,16 @@
    :content-type :json
    :accept :json}))) ["result"]))
 
+(defn chat [s] (last (re-find #"<that>(.*?)</that>"
+  (slurp (str "http://www.pandorabots.com/pandora/talk-xml?botid=e677ae285e345411&custid=dab7dadbaf3ed558&input=" (URLEncoder/encode s "UTF-8"))))))
+
 (defplugin
-  (:cmd 
-   "Attempts to make an intelligent reply from arbitrary input." 
-   #{"dumbot"} 
+  (:cmd
+   "Hello, you can tell me anything, and I will talk to you."
+   #{"dumbot"}
    (fn [{:keys [args] :as com-m}]
-     (send-message com-m 
-                   (:out (sh "python" "chat.py" (string/join " " args))))))
+     (send-message com-m
+                   (chat (string/join " " args)))))
 
   (:cmd
    "Displays a G-rated version of an urbandictionary term, which should be even creepier than the original."

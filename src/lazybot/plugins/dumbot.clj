@@ -10,10 +10,15 @@
 
 (defn app-id [bot] (-> bot :config :dumbot :parse-app-id))
 (defn api-key [bot] (-> bot :config :dumbot :parse-api-key))
+(defn yelp-id [bot] (-> bot :config :dumbot :yelp-id))
 
 (defn today [] (.format (java.text.SimpleDateFormat. "MM/dd") (Date.)))
 
 (defn query-finance [x] (str (str (second (re-find #"<title>(.*?)<\/title>" (slurp x)))) ": " x))
+
+(defn parse-business [j] (let [b (get-in (json/parse-string j) ["businesses" 0])] 
+  (str (get-in b ["name"]) " [" (get-in b ["avg_rating"]) " stars] - URL: " (get-in b ["url"]) " | Review: " 
+       (get-in b ["reviews" 0 "text_excerpt"]))))
 
 (defn suburb-define [bot w] (get-in (json/parse-string (:body (http/post "https://api.parse.com/1/functions/define"
   {:body (str "{\"word\": \"" w "\"}")
@@ -32,6 +37,16 @@
    (fn [{:keys [args] :as com-m}]
      (send-message com-m
                    (chat (string/join " " args)))))
+
+  (:cmd
+   "Displays the closest highest rated business matching your query from Yelp, along with URL and a random review."
+   #{"yelp" "bbb" "extort"}
+   (fn [{:keys [bot args] :as com-m}]
+     (send-message com-m
+                   (parse-business (slurp (str "http://api.yelp.com/business_review_search?term="
+                                               (string/join "%20" args)
+                                               "&limit=3&location=64137&ywsid="
+                                               (yelp-id @bot)))))))
 
   (:cmd
    "Displays a G-rated version of an urbandictionary term, which should be even creepier than the original."
